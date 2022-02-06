@@ -1,10 +1,9 @@
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    01/25/22 22:15:57
-<Lab 4: Calculate the number of coins, and predict flag valu  Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/05/22 20:11:34
+ Lab 5: Calculate time differenc			     Page 1 - 1
 
 
-				TITLE  Lab 4: Calculate the number of coins, and predict flag values
+				TITLE  Lab 5: Calculate time difference
 
-				; Don't forget this beginning documentation with your name
 				; Name: Aryan Garg
 
 
@@ -27,149 +26,187 @@ Microsoft (R) Macro Assembler Version 14.30.30706.0	    01/25/22 22:15:57
 			      C .LIST
 			      C 
 
-				; Part 1 (10pts)
-
 
  00000000			.data
-
- = 00000063			MAX = 99
- 00000000 43 68 61 6E 67	changeIsStr BYTE "Change is: ", 0
-	   65 20 69 73 3A
-	   20 00
- 0000000C 20 63 65 6E 74	centsStr BYTE " cents", 0
-	   73 00
- 00000013 20 71 75 61 72	quartersStr BYTE " quarters, ", 0
-	   74 65 72 73 2C
-	   20 00
- 0000001F 20 64 69 6D 65	dimesStr BYTE " dimes, ", 0
+ 00000000 45 6E 74 65 72	enterHour BYTE "Enter hour: ", 0
+	   20 68 6F 75 72
+	   3A 20 00
+ 0000000D 45 6E 74 65 72	enterMinute BYTE "Enter minute: ", 0
+	   20 6D 69 6E 75
+	   74 65 3A 20 00
+ 0000001C 49 6E 76 61 6C	invalidInputStr BYTE "Invalid input", 0
+	   69 64 20 69 6E
+	   70 75 74 00
+ 0000002A 4F 76 65 72 66	overflowErrStr BYTE "Overflow error: Time inputted too large", 0
+	   6C 6F 77 20 65
+	   72 72 6F 72 3A
+	   20 54 69 6D 65
+	   20 69 6E 70 75
+	   74 74 65 64 20
+	   74 6F 6F 20 6C
+	   61 72 67 65 00
+ 00000052 4D 69 73 6D 61	mismatchErrStr BYTE "Mismatch error: Start Time > End Time", 0
+	   74 63 68 20 65
+	   72 72 6F 72 3A
+	   20 53 74 61 72
+	   74 20 54 69 6D
+	   65 20 3E 20 45
+	   6E 64 20 54 69
+	   6D 65 00
+ 00000078 20 68 6F 75 72	hoursStr BYTE " hours, ", 0
 	   73 2C 20 00
- 00000028 20 6E 69 63 6B	nickelsStr BYTE " nickels, ", 0
-	   65 6C 73 2C 20
-	   00
- 00000033 20 70 65 6E 6E	penniesStr BYTE " pennies", 0
-	   69 65 73 00
+ 00000081 20 6D 69 6E 75	minutesStr BYTE " minutes", 0
+	   74 65 73 00
+ 0000008A 43 6F 6E 74 69	continueStr BYTE "Continue? (y/n): ", 0
+	   6E 75 65 3F 20
+	   28 79 2F 6E 29
+	   3A 20 00
 
 
  00000000			.code
  00000000			main PROC
 
-					; using cl as my changeRemaining variable
+				; ch and cl stores one pair of hour / minute
+				; bh and bl store the other pair of hour / minute
+				; if SI register is 0, then we are initializing the first pair of hour / minute
+				; if SI register is 1, then we are initializing the second pair of hour / minute
 
- 00000000  E8 00000000 E		call randomize					; create a seed for the random number generator
- 00000005  B8 00000063			mov eax, MAX    				; set upper limit for random number to MAX
- 0000000A  E8 00000000 E		call randomRange				; random number is returned in eax, and is 0-MAX inclusive
-					; call writeDec					; print to check random number
- 0000000F  8A C8			mov cl, al						; store random number in cl
+ 00000000			Start:
+ 00000000  66| BE 0000		mov si, 0
 
- 00000011  B8 00000000			mov eax, 0						; set eax to 0
+ 00000004			HourInput:
+ 00000004  BA 00000000 R		mov edx, OFFSET enterHour
+ 00000009  E8 00000000 E		call WriteString ; promps user to enter an hour
+ 0000000E  E8 00000000 E		call ReadDec ; reads hour into EAX
+ 00000013  8A E8			mov ch, al ; stores hour into ch
+ 00000015  80 FD 00			cmp ch, 0
+ 00000018  0F 82 00000105		jb InvalidInput ; if hour < 0, jump to InvalidInput
+ 0000001E  80 FD 17			cmp ch, 23
+ 00000021  0F 87 000000FC		ja InvalidInput ; if hour > 23, jump to InvalidInput
 
- 00000016  BA 00000000 R		mov edx, offset changeIsStr
- 0000001B  E8 00000000 E		call writeString				; print change is:
- 00000020  8A C1			mov al, cl						; set al to change
- 00000022  E8 00000000 E		call writeDec					; print random number in eax (change)
- 00000027  BA 0000000C R		mov edx, offset centsStr
- 0000002C  E8 00000000 E		call writeString				; print cents
- 00000031  E8 00000000 E		call Crlf						; print a new line
+ 00000027			MinuteInput:
+ 00000027  BA 0000000D R		mov edx, OFFSET enterMinute
+ 0000002C  E8 00000000 E		call WriteString ; promps user to enter a minute
+ 00000031  E8 00000000 E		call ReadDec ; reads minute into EAX
+ 00000036  8A C8			mov cl, al ; stores minute into cl
+ 00000038  80 F9 00			cmp cl, 0
+ 0000003B  0F 82 000000E2		jb InvalidInput ; if minute < 0, jump to InvalidInput
+ 00000041  80 F9 3B			cmp cl, 59
+ 00000044  0F 87 000000D9		ja InvalidInput ; if minute > 59, jump to InvalidInput
 
-					; we need to divide random num (dividend, will be in AX) by 25,10,5 (divisor)
+ 0000004A  66| 83 FE 01			cmp si, 1
+ 0000004E  74 0A			je Calculate ; if si is 1, then we can move onto calculating the time difference
+					; else we need to initialize the second pair of hour / minute and increment si
+ 00000050  66| BE 0001			mov si, 1
+ 00000054  8A D9			mov bl, cl ; move first minute into bl
+ 00000056  8A FD			mov bh, ch ; move first hour into bh
+ 00000058  EB AA			jmp HourInput
 
- 00000036  8A C1			mov al, cl						; set al to change
- 00000038  B3 19			mov bl, 25						; set bl to quarterSize
- 0000003A  F6 F3			div bl							; AL = change / 25, AH = change % 25
- 0000003C  8A CC			mov cl, ah						; store change % 25 in cl
- 0000003E  B4 00			mov ah, 0 						; set ah to 0
-					; eax should now equal the number of quarters
- 00000040  E8 00000000 E		call writeDec					; print number of quarters
- 00000045  BA 00000013 R		mov edx, offset quartersStr 	; move "quarters" into edx
- 0000004A  E8 00000000 E		call writeString				; print quarters
 
- 0000004F  8A C1			mov al, cl						; set al to change
- 00000051  B3 0A			mov bl, 10						; set bl to dimeSize
- 00000053  F6 F3			div bl							; AL = change / 10, AH = change % 10
- 00000055  8A CC			mov cl, ah						; store change % 10 in cl
- 00000057  B4 00			mov ah, 0 						; set ah to 0
-					; eax should now equal the number of dimes
- 00000059  E8 00000000 E		call writeDec					; print number of dimes
- 0000005E  BA 0000001F R		mov edx, offset dimesStr	 	; move "dimes" into edx
- 00000063  E8 00000000 E		call writeString				; print dimes
+ 0000005A			Calculate:
+ 0000005A  B0 3C			mov al, 60
+ 0000005C  F6 E7			mul bh ; multiply first hour by 60
+ 0000005E  0F 82 000000D3		jc OverflowError ; jump if overflow err
+ 00000064  80 FC 00			cmp ah, 0
+ 00000067  0F 85 000000CA		jne OverflowError ; if AH has bits (value is not an 8bit value), then jump to OverflowError
+ 0000006D  02 C3			add al, bl ; add first minute to the result
+					; ax now equals the total number of minutes in the first pair of hour / minute
+ 0000006F  0F 82 000000C2		jc OverflowError
+ 00000075  80 FC 00			cmp ah, 0
+ 00000078  0F 85 000000B9		jne OverflowError
+ 0000007E  8A D8			mov bl, al ; move the result into bl
 
- 00000068  8A C1			mov al, cl						; set al to change
- 0000006A  B3 05			mov bl, 5						; bl is nickel size
- 0000006C  F6 F3			div bl							; AL = change / 5, AH = change % 5
- 0000006E  8A CC			mov cl, ah						; store change % 5 in cl
- 00000070  B4 00			mov ah, 0 						; set ah to 0
-					; eax should now equal the number of nickels
- 00000072  E8 00000000 E		call writeDec					; print number of nickels
- 00000077  BA 00000028 R		mov edx, offset nickelsStr	 	; move "nickels" into edx
- 0000007C  E8 00000000 E		call writeString				; print nickels
+					; now do the same for the other pair
+ 00000080  B0 3C			mov al, 60
+ 00000082  F6 E5			mul ch ; multiply second hour by 60
+ 00000084  0F 82 000000AD		jc OverflowError
+ 0000008A  80 FC 00			cmp ah, 0
+ 0000008D  0F 85 000000A4		jne OverflowError
+ 00000093  02 C1			add al, cl ; add second minute to the result
+ 00000095  0F 82 0000009C		jc OverflowError
+ 0000009B  80 FC 00			cmp ah, 0
+ 0000009E  0F 85 00000093		jne OverflowError ; if AH has bits (value is not an 8bit value), then jump to OverflowError
+ 000000A4  8A C8			mov cl, al ; move the result into cl
 
- 00000081  8A C1			mov al, cl						; set al to change
-					; al / eax is now the number of pennies remaining
- 00000083  E8 00000000 E		call writeDec					; print number of pennies
- 00000088  BA 00000033 R		mov edx, offset penniesStr	 	; move "pennies" into edx
- 0000008D  E8 00000000 E		call writeString				; print pennies
- 00000092  E8 00000000 E		call Crlf						; print a new line
+					; bl now contias total minutes for end pair
+					; cl now contias total minutes for start pair
+ 000000A6  3A D9			cmp bl, cl
+ 000000A8  0F 82 0000009D		jb MismatchError ; if endTime < startTime, jump to MismatchError
 
+ 000000AE  2A D9			sub bl, cl ; subtract the end pair from the start pair
+					; bl now contains the minute difference between the two pairs of hour / minute
+					; now to convert back to number of hours and min we need to divide by 60
+
+ 000000B0  8A C3			mov al, bl
+ 000000B2  B3 3C			mov bl, 60
+ 000000B4  F6 F3			div bl ; divide totalMin by 60
+
+
+					; ah now contains the number of minutes
+					; al now contains the number of hours
+ 000000B6  8A F8			mov bh, al ; set bh to num of hours
+ 000000B8  8A DC			mov bl, ah ; set bl to num of minutes
+
+ 000000BA  B8 00000000			mov eax, 0
+					; now we need to print the result
+ 000000BF  8A C7			mov al, bh
+ 000000C1  E8 00000000 E		call WriteDec ; print number of hours
+ 000000C6  BA 00000078 R		mov edx, OFFSET hoursStr
+ 000000CB  E8 00000000 E		call WriteString ; print number of hours
+ 000000D0  8A C3			mov al, bl
+ 000000D2  E8 00000000 E		call WriteDec ; print number of minutes
+ 000000D7  BA 00000081 R		mov edx, OFFSET minutesStr
+ 000000DC  E8 00000000 E		call WriteString ; print number of minutes
+ 000000E1  E8 00000000 E		call Crlf
+
+ 000000E6			Continue:
+ 000000E6  BA 0000008A R		mov edx, OFFSET continueStr
+ 000000EB  E8 00000000 E		call WriteString ; prompt user to continue
+ 000000F0  E8 00000000 E		call ReadChar ; read user input into AL
+ 000000F5  E8 00000000 E		call Crlf
+ 000000FA  3C 79			cmp al, 'y'
+ 000000FC  0F 84 FFFFFEFE		je Start ; if user input is y, then jump to start
+ 00000102  3C 59			cmp al, 'Y'
+ 00000104  0F 84 FFFFFEF6		je Start
+ 0000010A  3C 6E			cmp al, 'n'
+ 0000010C  74 51			je EndOfProgram ; if user input is n, then jump to Exit
+ 0000010E  3C 4E			cmp al, 'N'
+ 00000110  74 4D			je EndOfProgram
+
+ 00000112  BA 0000001C R		mov edx, OFFSET invalidInputStr
+ 00000117  E8 00000000 E		call WriteString ; print invalid input
+ 0000011C  E8 00000000 E		call Crlf
+ 00000121  EB C3			jmp Continue ; if user input is not y or n, then jump to Continue
+
+
+
+ 00000123			InvalidInput:
+ 00000123  BA 0000001C R		mov edx, OFFSET invalidInputStr
+ 00000128  E8 00000000 E		call WriteString ; prints invalid input message
+ 0000012D  E8 00000000 E		call Crlf
+ 00000132  E9 FFFFFECD			jmp HourInput ; restart input process
+
+ 00000137			OverflowError:
+ 00000137  BA 0000002A R		mov edx, OFFSET overflowErrStr
+ 0000013C  E8 00000000 E		call WriteString ; prints overflow error message
+ 00000141  E8 00000000 E		call Crlf
+ 00000146  E9 FFFFFEB5			jmp Start ; restart input process
+
+ 0000014B			MismatchError:
+ 0000014B  BA 00000052 R		mov edx, OFFSET mismatchErrStr
+ 00000150  E8 00000000 E		call WriteString ; prints mismatch error message
+ 00000155  E8 00000000 E		call Crlf
+ 0000015A  E9 FFFFFEA1			jmp Start ; restart input process
+
+ 0000015F			EndOfProgram:
 					exit
- 00000097  6A 00	   *	    push   +000000000h
- 00000099  E8 00000000 E   *	    call   ExitProcess
- 0000009E			main ENDP
+ 0000015F  6A 00	   *	    push   +000000000h
+ 00000161  E8 00000000 E   *	    call   ExitProcess
+ 00000166			main ENDP
 
 				END main
-
-
-				COMMENT !
-				Part 2 (5pts)
-				Assume ZF, SF, CF, OF are all 0 at the start, and the 3 instructions below run one after another.
-				a. fill in the value of all 4 flags after each instruction runs
-				b. show your work to explain why CF and OF flags have those values
-				   Your explanation should not refer to signed or unsigned data values,
-				   such as "the result will be out of range" or "204 is larger than a byte"
-				   or "adding 2 negatives can't result in a positive"
-				   Instead, show your work in the same way as in the exercise 4 solution.
-
-
-				mov al, 70h
-
-				add al, 30h
-
-				70h = 0111 0000
-				30h = 0011 0000
-
-				C:111
-				  0111 0000
-				+
-				  0011 0000
-				  ---------
-				  1010 0000
-
-				; a. ZF = 0  SF =1  CF = 0  OF = 1
-				; b. explanation for CF:
-					CF is set if there is any bits carried out of the MSB, but in this case nothing was carried out of the MSB so CF is 0
-
-				;    explanation for OF:
-					OF is set if the Carry out XOR Carry into the MSB. In this case a 1 is carried into the MSB and nothing is carried out of the MSB, so 0 XOR 1 = 1 so OF is 1
-
-				sub al, 070h
-
-				al = 1010 0000
-				70h = 0111 0000
-				-70h = 1000 1111 + 1 = 1001 0000
-
-				C: 1
-				    1010 0000
-				+
-				    1001 0000
-				    ---------
-				(1) 0011 0000
-
-				; a. ZF = 0   SF = 0  CF =    OF =
-				; b. explanation for CF:
-				;    explanation for OF:
-
-!
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    01/25/22 22:15:57
-<Lab 4: Calculate the number of coins, and predict flag valu  Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/05/22 20:11:34
+ Lab 5: Calculate time differenc			     Symbols 2 - 1
 
 
 
@@ -262,8 +299,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000003C Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000009E Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000009C Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000166 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -370,7 +407,16 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000009E Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000166 Public STDCALL
+  Start  . . . . . . . . . . . .	L Near	 00000000 _TEXT	
+  HourInput  . . . . . . . . . .	L Near	 00000004 _TEXT	
+  MinuteInput  . . . . . . . . .	L Near	 00000027 _TEXT	
+  Calculate  . . . . . . . . . .	L Near	 0000005A _TEXT	
+  Continue . . . . . . . . . . .	L Near	 000000E6 _TEXT	
+  InvalidInput . . . . . . . . .	L Near	 00000123 _TEXT	
+  OverflowError  . . . . . . . .	L Near	 00000137 _TEXT	
+  MismatchError  . . . . . . . .	L Near	 0000014B _TEXT	
+  EndOfProgram . . . . . . . . .	L Near	 0000015F _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -462,7 +508,6 @@ KEY_EVENT  . . . . . . . . . . .	Number	 00000001h
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
 LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
 LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
-MAX  . . . . . . . . . . . . . .	Number	 00000063h   
 MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
 MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
 MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
@@ -593,13 +638,15 @@ WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-centsStr . . . . . . . . . . . .	Byte	 0000000C _DATA	
-changeIsStr  . . . . . . . . . .	Byte	 00000000 _DATA	
+continueStr  . . . . . . . . . .	Byte	 0000008A _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
-dimesStr . . . . . . . . . . . .	Byte	 0000001F _DATA	
+enterHour  . . . . . . . . . . .	Byte	 00000000 _DATA	
+enterMinute  . . . . . . . . . .	Byte	 0000000D _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
+hoursStr . . . . . . . . . . . .	Byte	 00000078 _DATA	
+invalidInputStr  . . . . . . . .	Byte	 0000001C _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -607,9 +654,9 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-nickelsStr . . . . . . . . . . .	Byte	 00000028 _DATA	
-penniesStr . . . . . . . . . . .	Byte	 00000033 _DATA	
-quartersStr  . . . . . . . . . .	Byte	 00000013 _DATA	
+minutesStr . . . . . . . . . . .	Byte	 00000081 _DATA	
+mismatchErrStr . . . . . . . . .	Byte	 00000052 _DATA	
+overflowErrStr . . . . . . . . .	Byte	 0000002A _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
