@@ -1,11 +1,10 @@
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/05/22 20:11:34
- Lab 5: Calculate time differenc			     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/12/22 14:25:09
+'Assignment 6: Use bit wise instruction			     Page 1 - 1
 
 
-				TITLE  Lab 5: Calculate time difference
+				TITLE  Assignment 6: Use bit wise instructions
 
 				; Name: Aryan Garg
-
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -26,187 +25,155 @@ Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/05/22 20:11:34
 			      C .LIST
 			      C 
 
-
  00000000			.data
- 00000000 45 6E 74 65 72	enterHour BYTE "Enter hour: ", 0
-	   20 68 6F 75 72
-	   3A 20 00
- 0000000D 45 6E 74 65 72	enterMinute BYTE "Enter minute: ", 0
-	   20 6D 69 6E 75
-	   74 65 3A 20 00
- 0000001C 49 6E 76 61 6C	invalidInputStr BYTE "Invalid input", 0
-	   69 64 20 69 6E
-	   70 75 74 00
- 0000002A 4F 76 65 72 66	overflowErrStr BYTE "Overflow error: Time inputted too large", 0
-	   6C 6F 77 20 65
-	   72 72 6F 72 3A
-	   20 54 69 6D 65
-	   20 69 6E 70 75
-	   74 74 65 64 20
-	   74 6F 6F 20 6C
-	   61 72 67 65 00
- 00000052 4D 69 73 6D 61	mismatchErrStr BYTE "Mismatch error: Start Time > End Time", 0
-	   74 63 68 20 65
-	   72 72 6F 72 3A
-	   20 53 74 61 72
-	   74 20 54 69 6D
-	   65 20 3E 20 45
-	   6E 64 20 54 69
-	   6D 65 00
- 00000078 20 68 6F 75 72	hoursStr BYTE " hours, ", 0
-	   73 2C 20 00
- 00000081 20 6D 69 6E 75	minutesStr BYTE " minutes", 0
-	   74 65 73 00
- 0000008A 43 6F 6E 74 69	continueStr BYTE "Continue? (y/n): ", 0
-	   6E 75 65 3F 20
-	   28 79 2F 6E 29
-	   3A 20 00
-
+ 00000000 45 41 58 20 69	zeroStr BYTE "EAX is 0", 0ah, 0dh, 0
+	   73 20 30 0A 0D
+	   00
+ 0000000B 44 69 76 69 73	divStr BYTE "Divisible by 4", 0ah, 0dh, 0
+	   69 62 6C 65 20
+	   62 79 20 34 0A
+	   0D 00
+ 0000001C 0001 0F02 FFFE	arr WORD 1, 0f02h, -2
 
  00000000			.code
  00000000			main PROC
+				; Question 1 (3pts)
+				; In the space below, write code in 3 different ways (use 3 different instructions)
+				; to check whether EAX is 0, and jump to label Zero if it is, otherwise jump to Q2.
+				; To solve this problem you:
+				; - cannot use the CMP instruction or arithmetic instruction (ADD, SUB, DIV, etc.)
+				; - cannot change the EAX value or copy the EAX value to another register
 
-				; ch and cl stores one pair of hour / minute
-				; bh and bl store the other pair of hour / minute
-				; if SI register is 0, then we are initializing the first pair of hour / minute
-				; if SI register is 1, then we are initializing the second pair of hour / minute
+ 00000000  B8 00000000			mov eax, 0		; change this value to test your code
+					; make sure you have 3 different ways using 3 different instructions,
+					; only one will run at a time
 
- 00000000			Start:
- 00000000  66| BE 0000		mov si, 0
+					; Way 1: using AND
+ 00000005  83 E0 FF			and eax, 0FFFFFFFFh
+ 00000008  74 12			jz Zero
+ 0000000A  75 1F			jnz Q2
 
- 00000004			HourInput:
- 00000004  BA 00000000 R		mov edx, OFFSET enterHour
- 00000009  E8 00000000 E		call WriteString ; promps user to enter an hour
- 0000000E  E8 00000000 E		call ReadDec ; reads hour into EAX
- 00000013  8A E8			mov ch, al ; stores hour into ch
- 00000015  80 FD 00			cmp ch, 0
- 00000018  0F 82 00000105		jb InvalidInput ; if hour < 0, jump to InvalidInput
- 0000001E  80 FD 17			cmp ch, 23
- 00000021  0F 87 000000FC		ja InvalidInput ; if hour > 23, jump to InvalidInput
+					; Way 2: use TEST
+ 0000000C  A9 FFFFFFFF			test eax, 0FFFFFFFFh
+ 00000011  74 09			jz Zero
+ 00000013  75 16			jnz Q2
 
- 00000027			MinuteInput:
- 00000027  BA 0000000D R		mov edx, OFFSET enterMinute
- 0000002C  E8 00000000 E		call WriteString ; promps user to enter a minute
- 00000031  E8 00000000 E		call ReadDec ; reads minute into EAX
- 00000036  8A C8			mov cl, al ; stores minute into cl
- 00000038  80 F9 00			cmp cl, 0
- 0000003B  0F 82 000000E2		jb InvalidInput ; if minute < 0, jump to InvalidInput
- 00000041  80 F9 3B			cmp cl, 59
- 00000044  0F 87 000000D9		ja InvalidInput ; if minute > 59, jump to InvalidInput
+					; Way 3: use XOR
+ 00000015  83 F0 00			xor eax, 0
+ 00000018  74 02			jz Zero
+ 0000001A  75 0F			jnz Q2
 
- 0000004A  66| 83 FE 01			cmp si, 1
- 0000004E  74 0A			je Calculate ; if si is 1, then we can move onto calculating the time difference
-					; else we need to initialize the second pair of hour / minute and increment si
- 00000050  66| BE 0001			mov si, 1
- 00000054  8A D9			mov bl, cl ; move first minute into bl
- 00000056  8A FD			mov bh, ch ; move first hour into bh
- 00000058  EB AA			jmp HourInput
+ 0000001C				Zero :
+ 0000001C  BA 00000000 R			mov edx, OFFSET zeroStr
+ 00000021  E8 00000000 E			call writeString
+ 00000026  E8 00000000 E			call crlf
 
+ 0000002B				Q2:
+				; Question 2
+				; You can use the following code to impress your friends,
+				; but first you need to figure out how it works.
 
- 0000005A			Calculate:
- 0000005A  B0 3C			mov al, 60
- 0000005C  F6 E7			mul bh ; multiply first hour by 60
- 0000005E  0F 82 000000D3		jc OverflowError ; jump if overflow err
- 00000064  80 FC 00			cmp ah, 0
- 00000067  0F 85 000000CA		jne OverflowError ; if AH has bits (value is not an 8bit value), then jump to OverflowError
- 0000006D  02 C3			add al, bl ; add first minute to the result
-					; ax now equals the total number of minutes in the first pair of hour / minute
- 0000006F  0F 82 000000C2		jc OverflowError
- 00000075  80 FC 00			cmp ah, 0
- 00000078  0F 85 000000B9		jne OverflowError
- 0000007E  8A D8			mov bl, al ; move the result into bl
+ 0000002B  B0 42			mov al, 'B'	    ; al can contain any letter of the alphabet
+ 0000002D  34 20			xor al, ' '	    ; the second operand is a space character
+ 0000002F  E8 00000000 E		call WriteChar
+ 00000034  E8 00000000 E		Call crlf
 
-					; now do the same for the other pair
- 00000080  B0 3C			mov al, 60
- 00000082  F6 E5			mul ch ; multiply second hour by 60
- 00000084  0F 82 000000AD		jc OverflowError
- 0000008A  80 FC 00			cmp ah, 0
- 0000008D  0F 85 000000A4		jne OverflowError
- 00000093  02 C1			add al, cl ; add second minute to the result
- 00000095  0F 82 0000009C		jc OverflowError
- 0000009B  80 FC 00			cmp ah, 0
- 0000009E  0F 85 00000093		jne OverflowError ; if AH has bits (value is not an 8bit value), then jump to OverflowError
- 000000A4  8A C8			mov cl, al ; move the result into cl
+				COMMENT !
+				a. (1pt) What does the code do to the letter in AL?
+				   (Print the letter in AL to see, then change the letter to 'B', 'd', 'R', etc.)
+				   A turns into a (and visa versa)
+				   b turns into B (and visa versa)
 
-					; bl now contias total minutes for end pair
-					; cl now contias total minutes for start pair
- 000000A6  3A D9			cmp bl, cl
- 000000A8  0F 82 0000009D		jb MismatchError ; if endTime < startTime, jump to MismatchError
+				   The code seems to toggle the case of a character
 
- 000000AE  2A D9			sub bl, cl ; subtract the end pair from the start pair
-					; bl now contains the minute difference between the two pairs of hour / minute
-					; now to convert back to number of hours and min we need to divide by 60
+				b. (2pts) Explain how the code works. Your answer should not be a description
+				   of what the instruction does, such as "the code takes the value in AL
+				   and does an XOR with the space character."
 
- 000000B0  8A C3			mov al, bl
- 000000B2  B3 3C			mov bl, 60
- 000000B4  F6 F3			div bl ; divide totalMin by 60
+				   If we look at an ascii chart, the ascii char for space is
+				   20h or 0010 0000
+				   Since we are XOR'ing al with this, we are toglling the 6th bit of al
+				   This is essentially the same as adding 32 if the 5th bit is not set, or
+				   subtacting 32 if the 5th bit is set.
 
+				   We can see this play out with the ascii characters. If we uppercase A, the 5th bit is not set,
+				   so XOR ' ' is the same as adding 32. 'A' (DEC65) + 32 = 'a' (DEC 97)
+				   The same is true for all uppercase characters.
 
-					; ah now contains the number of minutes
-					; al now contains the number of hours
- 000000B6  8A F8			mov bh, al ; set bh to num of hours
- 000000B8  8A DC			mov bl, ah ; set bl to num of minutes
+				   For lowercase chars, you minus 32 since the 5th bit is set, so 'a' (dec 97) - 32 = 'A' (dec 65)
+				!
 
- 000000BA  B8 00000000			mov eax, 0
-					; now we need to print the result
- 000000BF  8A C7			mov al, bh
- 000000C1  E8 00000000 E		call WriteDec ; print number of hours
- 000000C6  BA 00000078 R		mov edx, OFFSET hoursStr
- 000000CB  E8 00000000 E		call WriteString ; print number of hours
- 000000D0  8A C3			mov al, bl
- 000000D2  E8 00000000 E		call WriteDec ; print number of minutes
- 000000D7  BA 00000081 R		mov edx, OFFSET minutesStr
- 000000DC  E8 00000000 E		call WriteString ; print number of minutes
- 000000E1  E8 00000000 E		call Crlf
+				; Question 3 (4 pts)
+				; Write code to check whether the number in AL is divisible by 4,
+				; jump to label DivBy4 if it is, or go to label Q4 if it's not.
+				; You should not have to use the DIV or IDIV instruction.
+				; Hint: write out the first few integers that are divisible by 4,
+				; and see if you can find a pattern with them.
 
- 000000E6			Continue:
- 000000E6  BA 0000008A R		mov edx, OFFSET continueStr
- 000000EB  E8 00000000 E		call WriteString ; prompt user to continue
- 000000F0  E8 00000000 E		call ReadChar ; read user input into AL
- 000000F5  E8 00000000 E		call Crlf
- 000000FA  3C 79			cmp al, 'y'
- 000000FC  0F 84 FFFFFEFE		je Start ; if user input is y, then jump to start
- 00000102  3C 59			cmp al, 'Y'
- 00000104  0F 84 FFFFFEF6		je Start
- 0000010A  3C 6E			cmp al, 'n'
- 0000010C  74 51			je EndOfProgram ; if user input is n, then jump to Exit
- 0000010E  3C 4E			cmp al, 'N'
- 00000110  74 4D			je EndOfProgram
+ 00000039  B0 0C		    mov al, 12     ; change this value to test your code
 
- 00000112  BA 0000001C R		mov edx, OFFSET invalidInputStr
- 00000117  E8 00000000 E		call WriteString ; print invalid input
- 0000011C  E8 00000000 E		call Crlf
- 00000121  EB C3			jmp Continue ; if user input is not y or n, then jump to Continue
+					; 4 = 0000 0100
+					; 8 = 0000 1000
+					; 12 = 0000 1100
+					; 16 = 0001 0000
+					; 20 = 0001 0100
+					; 24 = 0001 1000
+					; 28 = 0001 1100
+					; if the first 2 bits are set, then the number is not divisible by 4
+					; if the first 2 bits are not set, then the number is divisible by 4
+
+ 0000003B  24 03			and al, 11b ; extract the first 2 bits
+ 0000003D  74 02			jz DivBy4 ; if the first 2 bits are not set (00, not divisble), then jump to DivBy4
+ 0000003F  75 0F			jnz Q4 ; if the first 2 bits are set (10 / 01 / 11, divisble), then jump to Q4
 
 
 
- 00000123			InvalidInput:
- 00000123  BA 0000001C R		mov edx, OFFSET invalidInputStr
- 00000128  E8 00000000 E		call WriteString ; prints invalid input message
- 0000012D  E8 00000000 E		call Crlf
- 00000132  E9 FFFFFECD			jmp HourInput ; restart input process
+ 00000041				DivBy4:
+ 00000041  BA 0000000B R			mov edx, OFFSET divStr
+ 00000046  E8 00000000 E			call writeString
+ 0000004B  E8 00000000 E			call crlf
 
- 00000137			OverflowError:
- 00000137  BA 0000002A R		mov edx, OFFSET overflowErrStr
- 0000013C  E8 00000000 E		call WriteString ; prints overflow error message
- 00000141  E8 00000000 E		call Crlf
- 00000146  E9 FFFFFEB5			jmp Start ; restart input process
+ 00000050				Q4:
+				; Question 4 (5 pts)
+				; Given an array arr of 3 WORD size data, as defined in .data above,
+				; and ebx is initialized as shown below.
+				; Using ebx (not the array name), write ONE instruction (one line of code)
+				; to reverse the bits in the most significant byte (high byte) of
+				; the last 2 elements of arr.
+				; Reverse means turn 0 to 1 or 1 to 0.
+				; Your code should work with all values in arr, not just the sample data in arr
 
- 0000014B			MismatchError:
- 0000014B  BA 00000052 R		mov edx, OFFSET mismatchErrStr
- 00000150  E8 00000000 E		call WriteString ; prints mismatch error message
- 00000155  E8 00000000 E		call Crlf
- 0000015A  E9 FFFFFEA1			jmp Start ; restart input process
+ 00000050  BE 0000001C R		mov esi, OFFSET arr
+ 00000055  B9 00000004			mov ecx, 4
+ 0000005A  BB 00000002			mov ebx, 2
+ 0000005F  E8 00000000 E		call DumpMem
 
- 0000015F			EndOfProgram:
+ 00000064  BB 0000001C R		mov ebx, OFFSET arr
+
+					; 0001 0F02 FFFE is the arr
+					; using DWORD ptr [ebx + 2] will read in:
+					; FE FF 02 0F
+					; we want to XOR 0F and FF, getting F0 00
+					; so final result: FE 00 02 F0
+					; we do this by XORING 00FF00FFh
+
+ 00000069  81 73 02			xor DWORD PTR [ebx+2], 0ff00ff00h
+	   FF00FF00
+
+ 00000070  BE 0000001C R		mov esi, OFFSET arr
+ 00000075  B9 00000004			mov ecx, 4
+ 0000007A  BB 00000002			mov ebx, 2
+ 0000007F  E8 00000000 E		call DumpMem
+
+
 					exit
- 0000015F  6A 00	   *	    push   +000000000h
- 00000161  E8 00000000 E   *	    call   ExitProcess
- 00000166			main ENDP
+ 00000084  6A 00	   *	    push   +000000000h
+ 00000086  E8 00000000 E   *	    call   ExitProcess
+ 0000008B			main ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/05/22 20:11:34
- Lab 5: Calculate time differenc			     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/12/22 14:25:09
+'Assignment 6: Use bit wise instruction			     Symbols 2 - 1
 
 
 
@@ -299,8 +266,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000009C Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000166 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000022 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000008B Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -407,16 +374,11 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000166 Public STDCALL
-  Start  . . . . . . . . . . . .	L Near	 00000000 _TEXT	
-  HourInput  . . . . . . . . . .	L Near	 00000004 _TEXT	
-  MinuteInput  . . . . . . . . .	L Near	 00000027 _TEXT	
-  Calculate  . . . . . . . . . .	L Near	 0000005A _TEXT	
-  Continue . . . . . . . . . . .	L Near	 000000E6 _TEXT	
-  InvalidInput . . . . . . . . .	L Near	 00000123 _TEXT	
-  OverflowError  . . . . . . . .	L Near	 00000137 _TEXT	
-  MismatchError  . . . . . . . .	L Near	 0000014B _TEXT	
-  EndOfProgram . . . . . . . . .	L Near	 0000015F _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000008B Public STDCALL
+  Zero . . . . . . . . . . . . .	L Near	 0000001C _TEXT	
+  Q2 . . . . . . . . . . . . . .	L Near	 0000002B _TEXT	
+  DivBy4 . . . . . . . . . . . .	L Near	 00000041 _TEXT	
+  Q4 . . . . . . . . . . . . . .	L Near	 00000050 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -635,18 +597,15 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+arr  . . . . . . . . . . . . . .	Word	 0000001C _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-continueStr  . . . . . . . . . .	Byte	 0000008A _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
-enterHour  . . . . . . . . . . .	Byte	 00000000 _DATA	
-enterMinute  . . . . . . . . . .	Byte	 0000000D _DATA	
+divStr . . . . . . . . . . . . .	Byte	 0000000B _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
-hoursStr . . . . . . . . . . . .	Byte	 00000078 _DATA	
-invalidInputStr  . . . . . . . .	Byte	 0000001C _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -654,13 +613,11 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-minutesStr . . . . . . . . . . .	Byte	 00000081 _DATA	
-mismatchErrStr . . . . . . . . .	Byte	 00000052 _DATA	
-overflowErrStr . . . . . . . . .	Byte	 0000002A _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
+zeroStr  . . . . . . . . . . . .	Byte	 00000000 _DATA	
 
 	   0 Warnings
 	   0 Errors
