@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/27/22 22:16:01
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/28/22 13:32:01
 0Lab 7: Calculate time difference with procedure	     Page 1 - 1
 
 
@@ -78,164 +78,239 @@ Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/27/22 22:16:01
  00000005  BB 00000014 R		mov ebx, OFFSET mnStr
  0000000A  B9 0000002A R		mov ecx, OFFSET timeErrStr
  0000000F  BA 0000007A R		mov edx, OFFSET timeArr
- 00000014  E8 00000023			call readTime
+ 00000014  E8 00000062			call readTime
 
 
 					; 2. find difference: pass arguments through *the stack*
 					;; call findDiff proc and pass timeArr, diffHr, diffMin
+ 00000019  50				push eax ; space for return value
+ 0000001A  68 0000007C R		push OFFSET diffHr
+ 0000001F  68 0000007D R		push OFFSET diffMin
+ 00000024  68 0000007A R		push OFFSET timeArr
+ 00000029  E8 000000DC			call findDiff
+
+ 0000002E  58				pop eax ; remove return value
+ 0000002F  83 F8 01			cmp eax, 1 ; if findDiff returns 1, then there was an error
+ 00000032  74 32			je invalidDiff
 
 
 
 					; 3. based on return value, either:
 					; a) print result
- 00000019  0F B6 05			movzx eax, diffHr
+ 00000034  0F B6 05			movzx eax, diffHr
 	   0000007C R
- 00000020  E8 00000000 E		call writeDec
-					;; write code to use macro to print hrOutStr
+ 0000003B  E8 00000000 E		call writeDec
+					printStr OFFSET hrOutStr ;; write code to use macro to print hrOutStr
+ 00000040  52		     1		push edx
+ 00000041  BA 00000066 R     1		mov edx, OFFSET hrOutStr
+ 00000046  E8 00000000 E     1		call WriteString
+ 0000004B  5A		     1		pop edx
 
- 00000025  0F B6 05			movzx eax, diffMin
+
+ 0000004C  0F B6 05			movzx eax, diffMin
 	   0000007D R
- 0000002C  E8 00000000 E		call writeDec
-					;; write code to use macro to print minOutStr
-
-
- 00000031  EB 00			jmp theEnd
+ 00000053  E8 00000000 E		call writeDec
+					printStr OFFSET mnOutStr ;; write code to use macro to print mnOutStr
+ 00000058  52		     1		push edx
+ 00000059  BA 0000006F R     1		mov edx, OFFSET mnOutStr
+ 0000005E  E8 00000000 E     1		call WriteString
+ 00000063  5A		     1		pop edx
+ 00000064  EB 0C			jmp theEnd
 
 					; or b) print error message
- 00000033				invalidDiff :
-					;; write code to use macro to print diffErrStr
+ 00000066				invalidDiff :
+					printStr OFFSET diffErrStr ;; write code to use macro to print diffErrStr
+ 00000066  52		     1		push edx
+ 00000067  BA 0000003A R     1		mov edx, OFFSET diffErrStr
+ 0000006C  E8 00000000 E     1		call WriteString
+ 00000071  5A		     1		pop edx
 
 
- 00000033				theEnd:
- 00000033  EB CB			jmp top      ; create infinite loop for testing
+ 00000072				theEnd:
+ 00000072  EB 8C			jmp top      ; create infinite loop for testing
 
 					exit
- 00000035  6A 00	   *	    push   +000000000h
- 00000037  E8 00000000 E   *	    call   ExitProcess
- 0000003C			main ENDP
+ 00000074  6A 00	   *	    push   +000000000h
+ 00000076  E8 00000000 E   *	    call   ExitProcess
+ 0000007B			main ENDP
 
 
- 0000003C			readTime PROC
+ 0000007B			readTime PROC
 
- 0000003C  55			push ebp ; setup stack frame base pointer
- 0000003D  8B EC		mov ebp, esp
+ 0000007B  55				push ebp ; setup stack frame base pointer
+ 0000007C  8B EC			mov ebp, esp
 
-				; push 041414141h ; ebp  - 4
-				; push 042424242h ; ebp  - 8
-				; push 043434343h ; ebp  - 12
-				; push 044444444h ; ebp  - 16
+					; push 041414141h ; ebp  - 4
+					; push 042424242h ; ebp  - 8
+					; push 043434343h ; ebp  - 12
+					; push 044444444h ; ebp  - 16
 
- 0000003F  56			push esi ; save esi register, ebi - 4
+ 0000007E  56				push esi ; save esi register, ebi - 4
 
- 00000040  50			push eax ; ebp - 8 = hourStr
- 00000041  53			push ebx ; ebp - 12 = mnStr
- 00000042  51			push ecx ; ebp - 16 = timeErrStr
- 00000043  52			push edx ; ebp - 20 = timeArr
+ 0000007F  50				push eax ; ebp - 8 = hourStr
+ 00000080  53				push ebx ; ebp - 12 = mnStr
+ 00000081  51				push ecx ; ebp - 16 = timeErrStr
+ 00000082  52				push edx ; ebp - 20 = timeArr
 
- 00000044			Start:
- 00000044  66| BE 0000		mov si, 0
+ 00000083				Start:
+ 00000083  66| BE 0000			mov si, 0
 
- 00000048			HourInput:
+ 00000087				HourInput:
 
- 00000048  8B 45 F8			mov eax, [ebp - 8] ; move the char* hrStr at ebp-8 into eax
-					printStr eax ; print hour input str
- 0000004B  52		     1		push edx
- 0000004C  8B D0	     1		mov edx, eax
- 0000004E  E8 00000000 E     1		call WriteString
- 00000053  5A		     1		pop edx
+ 00000087  8B 45 F8				mov eax, [ebp - 8] ; move the char* hrStr at ebp-8 into eax
+						printStr eax ; print hour input str
+ 0000008A  52		     1		push edx
+ 0000008B  8B D0	     1		mov edx, eax
+ 0000008D  E8 00000000 E     1		call WriteString
+ 00000092  5A		     1		pop edx
 
- 00000054  E8 00000000 E		call ReadInt ; reads hour into EAX
- 00000059  83 F8 00			cmp eax, 0
- 0000005C  7C 39			jl InvalidInput ; if hour < 0, jump to InvalidInput
- 0000005E  83 F8 17			cmp eax, 23
- 00000061  7F 34			jg InvalidInput ; if hour > 23, jump to InvalidInput
+ 00000093  E8 00000000 E			call ReadInt ; reads hour into EAX
+ 00000098  83 F8 00				cmp eax, 0
+ 0000009B  7C 39				jl InvalidInput ; if hour < 0, jump to InvalidInput
+ 0000009D  83 F8 17				cmp eax, 23
+ 000000A0  7F 34				jg InvalidInput ; if hour > 23, jump to InvalidInput
 
- 00000063  8A E8			mov ch, al ; stores hour into ch
-
-
- 00000065			MinuteInput:
- 00000065  8B 45 F4			mov eax, [ebp - 12] ; move the char* mnStr at ebp-12 into eax
-					printStr eax ; print minute input str
- 00000068  52		     1		push edx
- 00000069  8B D0	     1		mov edx, eax
- 0000006B  E8 00000000 E     1		call WriteString
- 00000070  5A		     1		pop edx
-
- 00000071  E8 00000000 E		call ReadInt ; reads minute into EAX
- 00000076  83 F8 00			cmp eax, 0
- 00000079  7C 1C			jl InvalidInput ; if minute < 0, jump to InvalidInput
- 0000007B  83 F8 3B			cmp eax, 59
- 0000007E  7F 17			jg InvalidInput ; if minute > 59, jump to InvalidInput
- 00000080  8A C8			mov cl, al ; stores minute into cl
-
- 00000082  66| 83 FE 01			cmp si, 1
- 00000086  74 1D			je Store ; if si is 1, then we got input for both times and can now store them
-
-					; else we need to initialize the second pair of hour / minute and increment si
- 00000088  66| BE 0001			mov si, 1
- 0000008C  8A D9			mov bl, cl ; move first minute into bl
- 0000008E  8A FD			mov bh, ch ; move first hour into bh
- 00000090  EB B6			jmp HourInput
-
- 00000092			InvalidInputReset:
- 00000092  BE 00000000			mov esi, 0
- 00000097			InvalidInput:
- 00000097  8B 45 F0			mov eax, [ebp - 16] ; move the char* errStr at ebp-16 into eax
-					printStr eax ; print error input str
- 0000009A  52		     1		push edx
- 0000009B  8B D0	     1		mov edx, eax
- 0000009D  E8 00000000 E     1		call WriteString
- 000000A2  5A		     1		pop edx
- 000000A3  EB A3			jmp HourInput ; restart input process
+ 000000A2  8A E8				mov ch, al ; stores hour into ch
 
 
- 000000A5			Store:
- 000000A5  B0 3C			mov al, 60
- 000000A7  F6 E7			mul bh ; multiply first hour by 60
- 000000A9  72 E7			jc InvalidInputReset ; jump if overflow err
+ 000000A4				MinuteInput:
+ 000000A4  8B 45 F4				mov eax, [ebp - 12] ; move the char* mnStr at ebp-12 into eax
+						printStr eax ; print minute input str
+ 000000A7  52		     1		push edx
+ 000000A8  8B D0	     1		mov edx, eax
+ 000000AA  E8 00000000 E     1		call WriteString
+ 000000AF  5A		     1		pop edx
 
- 000000AB  02 C3			add al, bl ; add first minute to the result
- 000000AD  72 E3			jc InvalidInputReset
+ 000000B0  E8 00000000 E			call ReadInt ; reads minute into EAX
+ 000000B5  83 F8 00				cmp eax, 0
+ 000000B8  7C 1C				jl InvalidInput ; if minute < 0, jump to InvalidInput
+ 000000BA  83 F8 3B				cmp eax, 59
+ 000000BD  7F 17				jg InvalidInput ; if minute > 59, jump to InvalidInput
+ 000000BF  8A C8				mov cl, al ; stores minute into cl
 
-					; al now stores the total minutes for the first pair (ebx is free for us to use)
-					; we need to move this into the timeArr[0]
-					; we know [ebp-20] gives us the address of timeArr[0]
- 000000AF  8B 5D EC			mov ebx, [ebp - 20]
-					; ebx now equals the address of timeArr
-					; now we set the first elem of timeArr to the total minutes
- 000000B2  88 03			mov [ebx + 0], al ; move the result into first element of Time Array
+ 000000C1  66| 83 FE 01				cmp si, 1
+ 000000C5  74 1D				je Store ; if si is 1, then we got input for both times and can now store them
 
-					; now do the same for the other pair
- 000000B4  B0 3C			mov al, 60
- 000000B6  F6 E5			mul ch ; multiply second hour by 60
- 000000B8  72 D8			jc InvalidInputReset
+						; else we need to initialize the second pair of hour / minute and increment si
+ 000000C7  66| BE 0001				mov si, 1
+ 000000CB  8A D9				mov bl, cl ; move first minute into bl
+ 000000CD  8A FD				mov bh, ch ; move first hour into bh
+ 000000CF  EB B6				jmp HourInput
 
- 000000BA  02 C1			add al, cl ; add second minute to the result
- 000000BC  72 D4			jc InvalidInputReset
-
-					; move the result into second element of Time Array
- 000000BE  8B 5D EC			mov ebx, [ebp - 20]
- 000000C1  88 43 01			mov [ebx + 1], al
-
-				; now that we are done, we need to pop back edx, ecx, ebx, eax, esi, and ebp
- 000000C4  5A			pop edx
- 000000C5  59			pop ecx
- 000000C6  5B			pop ebx
- 000000C7  58			pop eax
- 000000C8  5E			pop esi
- 000000C9  5D			pop ebp
- 000000CA  C3			ret ; return from readTime
-
- 000000CB			readTime ENDP
+ 000000D1				InvalidInputReset:
+ 000000D1  BE 00000000				mov esi, 0
+ 000000D6				InvalidInput:
+ 000000D6  8B 45 F0				mov eax, [ebp - 16] ; move the char* errStr at ebp-16 into eax
+						printStr eax ; print error input str
+ 000000D9  52		     1		push edx
+ 000000DA  8B D0	     1		mov edx, eax
+ 000000DC  E8 00000000 E     1		call WriteString
+ 000000E1  5A		     1		pop edx
+ 000000E2  EB A3				jmp HourInput ; restart input process
 
 
- 000000CB			findDiff PROC
+ 000000E4				Store:
+ 000000E4  B0 3C				mov al, 60
+ 000000E6  F6 E7				mul bh ; multiply first hour by 60
+ 000000E8  72 E7				jc InvalidInputReset ; jump if overflow err
 
- 000000CB			findDiff ENDP
+ 000000EA  02 C3				add al, bl ; add first minute to the result
+ 000000EC  72 E3				jc InvalidInputReset
+
+						; al now stores the total minutes for the first pair (ebx is free for us to use)
+						; we need to move this into the timeArr[0]
+						; we know [ebp-20] gives us the address of timeArr[0]
+ 000000EE  8B 5D EC				mov ebx, [ebp - 20]
+						; ebx now equals the address of timeArr
+						; now we set the first elem of timeArr to the total minutes
+ 000000F1  88 03				mov [ebx + 0], al ; move the result into first element of Time Array
+
+						; now do the same for the other pair
+ 000000F3  B0 3C				mov al, 60
+ 000000F5  F6 E5				mul ch ; multiply second hour by 60
+ 000000F7  72 D8				jc InvalidInputReset
+
+ 000000F9  02 C1				add al, cl ; add second minute to the result
+ 000000FB  72 D4				jc InvalidInputReset
+
+						; move the result into second element of Time Array
+ 000000FD  8B 5D EC				mov ebx, [ebp - 20]
+ 00000100  88 43 01				mov [ebx + 1], al
+
+					; now that we are done, we need to pop back edx, ecx, ebx, eax, esi, and ebp
+ 00000103  5A				pop edx
+ 00000104  59				pop ecx
+ 00000105  5B				pop ebx
+ 00000106  58				pop eax
+ 00000107  5E				pop esi
+ 00000108  5D				pop ebp
+ 00000109  C3				ret ; return from readTime
+
+ 0000010A			readTime ENDP
+
+
+ 0000010A			findDiff PROC
+					; ebx + 4 = return address
+					; ebx + 8 = timeArr
+					; ebx + 12 = diffMin
+					; ebx + 16 = diffHr
+					; ebx + 20 = return val
+
+
+ 0000010A  55				push ebp ; setup stack frame base pointer
+ 0000010B  8B EC			mov ebp, esp
+
+					; save registers
+ 0000010D  50				push eax
+ 0000010E  53				push ebx
+ 0000010F  51				push ecx
+
+ 00000110  8B 45 08			mov eax, [ebp + 8] ; timeArr address
+
+ 00000113  8A 18			mov bl, [eax + 0] ; first time (min)
+ 00000115  8A 48 01			mov cl, [eax + 1] ; second time (min)
+
+ 00000118  2A D9			sub bl, cl ; subtract the end pair from the start pair
+ 0000011A  72 14			jc MismatchError ; if result is negative, jump to MismatchError
+
+					; bl now contains the minute difference between the two pairs of hour / minute
+					; now to convert back to number of hours and min we need to divide by 60
+
+ 0000011C  B4 00			mov ah, 0
+ 0000011E  8A C3			mov al, bl
+ 00000120  B3 3C			mov bl, 60
+ 00000122  F6 F3			div bl ; divide totalMin by 60
+
+					; ah now contains the number of minutes
+					; al now contains the number of hours
+
+ 00000124  8B 5D 10			mov ebx , [ebp + 16] ; diffHr address
+ 00000127  88 03			mov [ebx], al ; set diffHr to al
+
+ 00000129  8B 5D 0C			mov ebx, [ebp + 12] ; diffHr address
+ 0000012C  88 23			mov [ebx], ah ; set diffMin to ah
+ 0000012E  EB 09			jmp Success
+
+ 00000130			MismatchError:
+ 00000130  C7 45 14			mov DWORD PTR [ebp+20], 1 ; set return val to 1
+	   00000001
+ 00000137  EB 07			jmp Restore
+
+ 00000139			Success:
+ 00000139  C7 45 14			mov DWORD PTR [ebp+20], 0 ; set return val to 0
+	   00000000
+
+ 00000140			Restore:
+ 00000140  59				pop ecx
+ 00000141  5B				pop ebx
+ 00000142  58				pop eax
+ 00000143  5D				pop ebp
+ 00000144  C2 000C			ret 4*3 ; pop out the 3 inputs (4 bytes each)
+ 00000147			findDiff ENDP
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/27/22 22:16:01
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/28/22 13:32:01
 0Lab 7: Calculate time difference with procedure	     Symbols 2 - 1
 
 
@@ -337,7 +412,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 0000007E Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000000CB Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000147 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -444,19 +519,22 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-findDiff . . . . . . . . . . . .	P Near	 000000CB _TEXT	Length= 00000000 Public STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000003C Public STDCALL
+findDiff . . . . . . . . . . . .	P Near	 0000010A _TEXT	Length= 0000003D Public STDCALL
+  MismatchError  . . . . . . . .	L Near	 00000130 _TEXT	
+  Success  . . . . . . . . . . .	L Near	 00000139 _TEXT	
+  Restore  . . . . . . . . . . .	L Near	 00000140 _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000007B Public STDCALL
   top  . . . . . . . . . . . . .	L Near	 00000000 _TEXT	
-  invalidDiff  . . . . . . . . .	L Near	 00000033 _TEXT	
-  theEnd . . . . . . . . . . . .	L Near	 00000033 _TEXT	
+  invalidDiff  . . . . . . . . .	L Near	 00000066 _TEXT	
+  theEnd . . . . . . . . . . . .	L Near	 00000072 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
-readTime . . . . . . . . . . . .	P Near	 0000003C _TEXT	Length= 0000008F Public STDCALL
-  Start  . . . . . . . . . . . .	L Near	 00000044 _TEXT	
-  HourInput  . . . . . . . . . .	L Near	 00000048 _TEXT	
-  MinuteInput  . . . . . . . . .	L Near	 00000065 _TEXT	
-  InvalidInputReset  . . . . . .	L Near	 00000092 _TEXT	
-  InvalidInput . . . . . . . . .	L Near	 00000097 _TEXT	
-  Store  . . . . . . . . . . . .	L Near	 000000A5 _TEXT	
+readTime . . . . . . . . . . . .	P Near	 0000007B _TEXT	Length= 0000008F Public STDCALL
+  Start  . . . . . . . . . . . .	L Near	 00000083 _TEXT	
+  HourInput  . . . . . . . . . .	L Near	 00000087 _TEXT	
+  MinuteInput  . . . . . . . . .	L Near	 000000A4 _TEXT	
+  InvalidInputReset  . . . . . .	L Near	 000000D1 _TEXT	
+  InvalidInput . . . . . . . . .	L Near	 000000D6 _TEXT	
+  Store  . . . . . . . . . . . .	L Near	 000000E4 _TEXT	
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 
