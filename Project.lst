@@ -1,8 +1,8 @@
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/28/22 13:32:01
-0Lab 7: Calculate time difference with procedure	     Page 1 - 1
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    03/14/22 19:08:41
+*Lab 8: Find letters in 2D array of string		     Page 1 - 1
 
 
-				TITLE  Lab 7: Calculate time difference with procedures
+				TITLE  Lab 8: Find letters in 2D array of strings
 
 				; Name: Aryan Garg
 
@@ -26,292 +26,258 @@ Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/28/22 13:32:01
 			      C .LIST
 			      C 
 
-				printStr MACRO strAddr
+ = 00000003			ROWS = 3
+ = 0000000B			COLS = 11
+
+				printStr MACRO addr
 					push edx
-					mov edx, strAddr
-					call WriteString
+					mov edx, addr
+					call writeString
 					pop edx
 				ENDM
 
+				multiplyNum MACRO reg, num, out
+					push eax
+					mov eax, num
+					mul reg
+					mov out, eax
+					pop eax
+				ENDM
+
+
  00000000			.data
- 00000000 45 6E 74 65 72	hrStr BYTE "Enter hour (0-23): ", 0
-	   20 68 6F 75 72
-	   20 28 30 2D 32
-	   33 29 3A 20 00
- 00000014 45 6E 74 65 72	mnStr BYTE "Enter minute (0-59): ", 0
-	   20 6D 69 6E 75
-	   74 65 20 28 30
-	   2D 35 39 29 3A
+
+ 00000000  00000021 [		myArr BYTE ROWS*COLS DUP(0)
+	    00
+	   ]
+ 00000021 45 6E 74 65 72	promptEnterStr BYTE "Enter a string: ", 0
+	   20 61 20 73 74
+	   72 69 6E 67 3A
 	   20 00
- 0000002A 49 6E 76 61 6C	timeErrStr BYTE "Invalid input", 0ah, 0dh, 0
-	   69 64 20 69 6E
-	   70 75 74 0A 0D
-	   00
-
- 0000003A 49 6E 76 61 6C	diffErrStr BYTE "Invalid time difference, check your times", 0ah, 0dh, 0
-	   69 64 20 74 69
-	   6D 65 20 64 69
-	   66 66 65 72 65
-	   6E 63 65 2C 20
-	   63 68 65 63 6B
-	   20 79 6F 75 72
-	   20 74 69 6D 65
-	   73 0A 0D 00
-
- 00000066 20 68 6F 75 72	hrOutStr BYTE " hours, ", 0
-	   73 2C 20 00
- 0000006F 20 6D 69 6E 75	mnOutStr BYTE " minutes", 0ah, 0dh, 0
-	   74 65 73 0A 0D
-	   00
-
- 0000007A 00 00			timeArr BYTE ?, ?		; array of: start total minutes, end total minutes
- 0000007C 00			diffHr BYTE ?			; time difference, hours portion
- 0000007D 00			diffMin BYTE ?			; time difference, minutes portion
+ 00000032 45 6E 74 65 72	promptEnterChar BYTE "Enter a character: ", 0
+	   20 61 20 63 68
+	   61 72 61 63 74
+	   65 72 3A 20 00
 
  00000000			.code
  00000000			main PROC
 
- 00000000			top :
-					; 1. read time: pass arguments through *registers*
-					;; call readTime proc and pass first 3 strings and timeArr
- 00000000  B8 00000000 R		mov eax, OFFSET hrStr
- 00000005  BB 00000014 R		mov ebx, OFFSET mnStr
- 0000000A  B9 0000002A R		mov ecx, OFFSET timeErrStr
- 0000000F  BA 0000007A R		mov edx, OFFSET timeArr
- 00000014  E8 00000062			call readTime
+				; 1. call fill array, pass arguments through *registers*
 
+ 00000000  B8 00000000 R	mov eax, OFFSET myArr
+ 00000005  BB 00000021 R	mov ebx, OFFSET promptEnterStr
 
-					; 2. find difference: pass arguments through *the stack*
-					;; call findDiff proc and pass timeArr, diffHr, diffMin
- 00000019  50				push eax ; space for return value
- 0000001A  68 0000007C R		push OFFSET diffHr
- 0000001F  68 0000007D R		push OFFSET diffMin
- 00000024  68 0000007A R		push OFFSET timeArr
- 00000029  E8 000000DC			call findDiff
+ 0000000A  E8 00000031		call fillArr
+ 0000000F  E8 00000000 E	call crlf
 
- 0000002E  58				pop eax ; remove return value
- 0000002F  83 F8 01			cmp eax, 1 ; if findDiff returns 1, then there was an error
- 00000032  74 32			je invalidDiff
+				; 2. check return value and end the program if return value is 0
+ 00000014  83 F8 00		cmp eax, 0 ; eax = num of strs entered
+ 00000017  74 20		jz endOfMain
 
+ 00000019  8B D8		mov ebx, eax ; store num of strs into ebx
 
+				; 3. loop to call findCount, pass arguments through *the stack*
+ 0000001B			letter:
+ 0000001B  50				push eax ; push space for return val
+ 0000001C  68 00000000 R		push OFFSET myArr ; push 2d arr
+ 00000021  53				push ebx ; push num of strs / rows to search from
+ 00000022  68 00000032 R		push OFFSET promptEnterChar ; push prompt
+ 00000027  E8 00000098			call findCount
 
-					; 3. based on return value, either:
-					; a) print result
- 00000034  0F B6 05			movzx eax, diffHr
-	   0000007C R
- 0000003B  E8 00000000 E		call writeDec
-					printStr OFFSET hrOutStr ;; write code to use macro to print hrOutStr
- 00000040  52		     1		push edx
- 00000041  BA 00000066 R     1		mov edx, OFFSET hrOutStr
- 00000046  E8 00000000 E     1		call WriteString
- 0000004B  5A		     1		pop edx
+ 0000002C  58				pop eax ; save count num
+ 0000002D  E8 00000000 E		call WriteDec ; write count num
+ 00000032  E8 00000000 E		call crlf
 
+ 00000037  EB E2			jmp letter
 
- 0000004C  0F B6 05			movzx eax, diffMin
-	   0000007D R
- 00000053  E8 00000000 E		call writeDec
-					printStr OFFSET mnOutStr ;; write code to use macro to print mnOutStr
- 00000058  52		     1		push edx
- 00000059  BA 0000006F R     1		mov edx, OFFSET mnOutStr
- 0000005E  E8 00000000 E     1		call WriteString
- 00000063  5A		     1		pop edx
- 00000064  EB 0C			jmp theEnd
-
-					; or b) print error message
- 00000066				invalidDiff :
-					printStr OFFSET diffErrStr ;; write code to use macro to print diffErrStr
- 00000066  52		     1		push edx
- 00000067  BA 0000003A R     1		mov edx, OFFSET diffErrStr
- 0000006C  E8 00000000 E     1		call WriteString
- 00000071  5A		     1		pop edx
-
-
- 00000072				theEnd:
- 00000072  EB 8C			jmp top      ; create infinite loop for testing
-
+ 00000039			endOfMain:
 					exit
- 00000074  6A 00	   *	    push   +000000000h
- 00000076  E8 00000000 E   *	    call   ExitProcess
- 0000007B			main ENDP
+ 00000039  6A 00	   *	    push   +000000000h
+ 0000003B  E8 00000000 E   *	    call   ExitProcess
+
+ 00000040			main ENDP
+
+				; eax = offset of arr
+				; ebx = offset of prompt str
+				; return val: eax = count
+ 00000040			fillArr PROC
+ 00000040  51				push ecx ; save ecx
+ 00000041  52				push edx ; save edx
+ 00000042  56				push esi ; save esi
+
+ 00000043  B9 00000003			mov ecx, ROWS ; set ecx to ROWS (used for loop iter)
+ 00000048  BE 00000000			mov esi, 0 ; set esi to 0
+					; esi is our currRow
+
+ 0000004D			fillArrLoop:
+					printStr ebx ; print prompt
+ 0000004D  52		     1		push edx
+ 0000004E  8B D3	     1		mov edx, ebx
+ 00000050  E8 00000000 E     1		call writeString
+ 00000055  5A		     1		pop edx
+ 00000056  51				push ecx ; save curr ecx val (loop iter)
+ 00000057  B9 0000000A			mov ecx, COLS-1 ; set ecx to max str input size (COLS-1 for null char)
+
+					; mov edx, eax + esi*COLS ; edx should = eax + currRow*COLS * sizeof(BYTE) = eax + esi*COLS
+
+					multiplyNum esi, COLS, edx ; edx = esi*COLS
+ 0000005C  50		     1		push eax
+ 0000005D  B8 0000000B	     1		mov eax, COLS
+ 00000062  F7 E6	     1		mul esi
+ 00000064  8B D0	     1		mov edx, eax
+ 00000066  58		     1		pop eax
+ 00000067  03 D0			add edx, eax ; edx = esi*cols + eax
+
+					; ecx now equals max chars
+					; edx equals offset to the curr row in the array
+ 00000069  50				push eax ; save eax as it will get modified by readString
+
+					; we can finally call readString
+ 0000006A  E8 00000000 E		call readString
+ 0000006F  83 F8 00			cmp eax, 0 ; check if eax is 0
+ 00000072  74 07			jz userEndFillArr ; if eax is 0, we're done
+
+ 00000074  58				pop eax
+ 00000075  59				pop ecx
+ 00000076  46				inc esi
+ 00000077  E2 D4			loop fillArrLoop
+
+ 00000079  EB 02		jmp exitFillArr
+
+ 0000007B			userEndFillArr:
+ 0000007B  58				pop eax
+ 0000007C  59				pop ecx
+
+ 0000007D			exitFillArr:
+ 0000007D  50				push eax ; push offset to 2d arr
+ 0000007E  56				push esi ; push num of rows
+ 0000007F  E8 00000006			call printArr ; print the array
+
+					; set up return val
+ 00000084  8B C6			mov eax, esi
+
+					; restore regs
+ 00000086  5E				pop esi
+ 00000087  5A				pop edx
+ 00000088  59				pop ecx
+
+ 00000089  C3				ret
+
+ 0000008A			fillArr ENDP
+
+				; [ebp + 8] = num of rows
+				; [ebp + 12] = offset to 2d arr
+ 0000008A			printArr PROC
+ 0000008A  55				push ebp ; setup base pointer
+ 0000008B  8B EC			mov ebp, esp
+
+ 0000008D  83 7D 08 00			cmp DWORD PTR [ebp+8], 0 ; check if num of rows is 0
+ 00000091  74 2D			jz endOfPrintArr
+
+ 00000093  51				push ecx ; save ecx
+ 00000094  52				push edx
+ 00000095  56				push esi
+
+ 00000096  8B 4D 08			mov ecx, [ebp + 8] ; set ecx to num of rows
+ 00000099  BE 00000000			mov esi, 0
+
+ 0000009E			printArrLoop:
+					; edx = currRow*col + [ebp+12]
+					; edx = esi*COLS + [ebp+12]
+					multiplyNum esi, COLS, edx
+ 0000009E  50		     1		push eax
+ 0000009F  B8 0000000B	     1		mov eax, COLS
+ 000000A4  F7 E6	     1		mul esi
+ 000000A6  8B D0	     1		mov edx, eax
+ 000000A8  58		     1		pop eax
+ 000000A9  03 55 0C			add edx, [ebp + 12] ; edx now is offset to the curr str in the 2d arr
+
+					printStr edx
+ 000000AC  52		     1		push edx
+ 000000AD  8B D2	     1		mov edx, edx
+ 000000AF  E8 00000000 E     1		call writeString
+ 000000B4  5A		     1		pop edx
+ 000000B5  E8 00000000 E		call crlf
+
+ 000000BA  46				inc esi
+ 000000BB  E2 E1			loop printArrLoop
+
+ 000000BD  5E				pop esi
+ 000000BE  5A				pop edx
+ 000000BF  59				pop ecx
 
 
- 0000007B			readTime PROC
+ 000000C0			endOfPrintArr:
+ 000000C0  5D				pop ebp
+ 000000C1  C2 0008			ret 4*2 ; pop out the 2 inputs (stack 4 byte aligned)
 
- 0000007B  55				push ebp ; setup stack frame base pointer
- 0000007C  8B EC			mov ebp, esp
-
-					; push 041414141h ; ebp  - 4
-					; push 042424242h ; ebp  - 8
-					; push 043434343h ; ebp  - 12
-					; push 044444444h ; ebp  - 16
-
- 0000007E  56				push esi ; save esi register, ebi - 4
-
- 0000007F  50				push eax ; ebp - 8 = hourStr
- 00000080  53				push ebx ; ebp - 12 = mnStr
- 00000081  51				push ecx ; ebp - 16 = timeErrStr
- 00000082  52				push edx ; ebp - 20 = timeArr
-
- 00000083				Start:
- 00000083  66| BE 0000			mov si, 0
-
- 00000087				HourInput:
-
- 00000087  8B 45 F8				mov eax, [ebp - 8] ; move the char* hrStr at ebp-8 into eax
-						printStr eax ; print hour input str
- 0000008A  52		     1		push edx
- 0000008B  8B D0	     1		mov edx, eax
- 0000008D  E8 00000000 E     1		call WriteString
- 00000092  5A		     1		pop edx
-
- 00000093  E8 00000000 E			call ReadInt ; reads hour into EAX
- 00000098  83 F8 00				cmp eax, 0
- 0000009B  7C 39				jl InvalidInput ; if hour < 0, jump to InvalidInput
- 0000009D  83 F8 17				cmp eax, 23
- 000000A0  7F 34				jg InvalidInput ; if hour > 23, jump to InvalidInput
-
- 000000A2  8A E8				mov ch, al ; stores hour into ch
+ 000000C4			printArr ENDP
 
 
- 000000A4				MinuteInput:
- 000000A4  8B 45 F4				mov eax, [ebp - 12] ; move the char* mnStr at ebp-12 into eax
-						printStr eax ; print minute input str
- 000000A7  52		     1		push edx
- 000000A8  8B D0	     1		mov edx, eax
- 000000AA  E8 00000000 E     1		call WriteString
- 000000AF  5A		     1		pop edx
+				; [ebp + 8] = prompt
+				; [ebp + 12] = num of strs
+				; [ebp + 16] = offset to 2d arr
+				; [ebp + 20] = return val of count
+ 000000C4			findCount PROC
+ 000000C4  55				push ebp ; setup base pointer
+ 000000C5  8B EC			mov ebp, esp
 
- 000000B0  E8 00000000 E			call ReadInt ; reads minute into EAX
- 000000B5  83 F8 00				cmp eax, 0
- 000000B8  7C 1C				jl InvalidInput ; if minute < 0, jump to InvalidInput
- 000000BA  83 F8 3B				cmp eax, 59
- 000000BD  7F 17				jg InvalidInput ; if minute > 59, jump to InvalidInput
- 000000BF  8A C8				mov cl, al ; stores minute into cl
+ 000000C7  50				push eax
+ 000000C8  53				push ebx
+ 000000C9  51				push ecx
+ 000000CA  52				push edx
+ 000000CB  56				push esi
 
- 000000C1  66| 83 FE 01				cmp si, 1
- 000000C5  74 1D				je Store ; if si is 1, then we got input for both times and can now store them
+ 000000CC  BA 00000000			mov edx, 0 ; set edx to 0 (our counter)
 
-						; else we need to initialize the second pair of hour / minute and increment si
- 000000C7  66| BE 0001				mov si, 1
- 000000CB  8A D9				mov bl, cl ; move first minute into bl
- 000000CD  8A FD				mov bh, ch ; move first hour into bh
- 000000CF  EB B6				jmp HourInput
+					printStr [ebp + 8] ; print prompt
+ 000000D1  52		     1		push edx
+ 000000D2  8B 55 08	     1		mov edx, [ebp + 8]
+ 000000D5  E8 00000000 E     1		call writeString
+ 000000DA  5A		     1		pop edx
+ 000000DB  E8 00000000 E		call ReadChar ; read char into al
+ 000000E0  E8 00000000 E		call WriteChar ; print char to the screen after reading it
+ 000000E5  E8 00000000 E		call crlf
 
- 000000D1				InvalidInputReset:
- 000000D1  BE 00000000				mov esi, 0
- 000000D6				InvalidInput:
- 000000D6  8B 45 F0				mov eax, [ebp - 16] ; move the char* errStr at ebp-16 into eax
-						printStr eax ; print error input str
- 000000D9  52		     1		push edx
- 000000DA  8B D0	     1		mov edx, eax
- 000000DC  E8 00000000 E     1		call WriteString
- 000000E1  5A		     1		pop edx
- 000000E2  EB A3				jmp HourInput ; restart input process
+ 000000EA  8B D8			mov ebx, eax ; ebx = al
 
+					; the amount of bytes we iter to is COLS * [numOfStrs]
+					multiplyNum DWORD PTR [ebp + 12], COLS, ecx
+ 000000EC  50		     1		push eax
+ 000000ED  B8 0000000B	     1		mov eax, COLS
+ 000000F2  F7 65 0C	     1		mul DWORD PTR [ebp + 12]
+ 000000F5  8B C8	     1		mov ecx, eax
+ 000000F7  58		     1		pop eax
 
- 000000E4				Store:
- 000000E4  B0 3C				mov al, 60
- 000000E6  F6 E7				mul bh ; multiply first hour by 60
- 000000E8  72 E7				jc InvalidInputReset ; jump if overflow err
+ 000000F8  8B 75 10			mov esi, [ebp+16] ; edi = offset to str
+ 000000FB  FC				cld ; clear direction flag
 
- 000000EA  02 C3				add al, bl ; add first minute to the result
- 000000EC  72 E3				jc InvalidInputReset
+ 000000FC			findCountLoop:
+ 000000FC  AC				lodsb ; load str byte into al
+ 000000FD  3A C3			cmp al, bl ; compare al to bl (curr char to entered str)
+ 000000FF  75 01			jnz findCountLoopJmp ; if not equal, skip inc step
 
-						; al now stores the total minutes for the first pair (ebx is free for us to use)
-						; we need to move this into the timeArr[0]
-						; we know [ebp-20] gives us the address of timeArr[0]
- 000000EE  8B 5D EC				mov ebx, [ebp - 20]
-						; ebx now equals the address of timeArr
-						; now we set the first elem of timeArr to the total minutes
- 000000F1  88 03				mov [ebx + 0], al ; move the result into first element of Time Array
+ 00000101  42				inc edx
 
-						; now do the same for the other pair
- 000000F3  B0 3C				mov al, 60
- 000000F5  F6 E5				mul ch ; multiply second hour by 60
- 000000F7  72 D8				jc InvalidInputReset
+ 00000102			findCountLoopJmp:
+ 00000102  E2 F8			loop findCountLoop
 
- 000000F9  02 C1				add al, cl ; add second minute to the result
- 000000FB  72 D4				jc InvalidInputReset
+ 00000104  89 55 14			mov [ebp + 20], edx
 
-						; move the result into second element of Time Array
- 000000FD  8B 5D EC				mov ebx, [ebp - 20]
- 00000100  88 43 01				mov [ebx + 1], al
-
-					; now that we are done, we need to pop back edx, ecx, ebx, eax, esi, and ebp
- 00000103  5A				pop edx
- 00000104  59				pop ecx
- 00000105  5B				pop ebx
- 00000106  58				pop eax
  00000107  5E				pop esi
- 00000108  5D				pop ebp
- 00000109  C3				ret ; return from readTime
+ 00000108  5A				pop edx
+ 00000109  59				pop ecx
+ 0000010A  5B				pop ebx
+ 0000010B  58				pop eax
+ 0000010C  5D				pop ebp
 
- 0000010A			readTime ENDP
+ 0000010D  C2 000C			ret 3*4 ; pop out the 3 inputs (stack 4 byte aligned)
 
-
- 0000010A			findDiff PROC
-					; ebx + 4 = return address
-					; ebx + 8 = timeArr
-					; ebx + 12 = diffMin
-					; ebx + 16 = diffHr
-					; ebx + 20 = return val
-
-
- 0000010A  55				push ebp ; setup stack frame base pointer
- 0000010B  8B EC			mov ebp, esp
-
-					; save registers
- 0000010D  50				push eax
- 0000010E  53				push ebx
- 0000010F  51				push ecx
-
- 00000110  8B 45 08			mov eax, [ebp + 8] ; timeArr address
-
- 00000113  8A 18			mov bl, [eax + 0] ; first time (min)
- 00000115  8A 48 01			mov cl, [eax + 1] ; second time (min)
-
- 00000118  2A D9			sub bl, cl ; subtract the end pair from the start pair
- 0000011A  72 14			jc MismatchError ; if result is negative, jump to MismatchError
-
-					; bl now contains the minute difference between the two pairs of hour / minute
-					; now to convert back to number of hours and min we need to divide by 60
-
- 0000011C  B4 00			mov ah, 0
- 0000011E  8A C3			mov al, bl
- 00000120  B3 3C			mov bl, 60
- 00000122  F6 F3			div bl ; divide totalMin by 60
-
-					; ah now contains the number of minutes
-					; al now contains the number of hours
-
- 00000124  8B 5D 10			mov ebx , [ebp + 16] ; diffHr address
- 00000127  88 03			mov [ebx], al ; set diffHr to al
-
- 00000129  8B 5D 0C			mov ebx, [ebp + 12] ; diffHr address
- 0000012C  88 23			mov [ebx], ah ; set diffMin to ah
- 0000012E  EB 09			jmp Success
-
- 00000130			MismatchError:
- 00000130  C7 45 14			mov DWORD PTR [ebp+20], 1 ; set return val to 1
-	   00000001
- 00000137  EB 07			jmp Restore
-
- 00000139			Success:
- 00000139  C7 45 14			mov DWORD PTR [ebp+20], 0 ; set return val to 0
-	   00000000
-
- 00000140			Restore:
- 00000140  59				pop ecx
- 00000141  5B				pop ebx
- 00000142  58				pop eax
- 00000143  5D				pop ebp
- 00000144  C2 000C			ret 4*3 ; pop out the 3 inputs (4 bytes each)
- 00000147			findDiff ENDP
-
+ 00000110			findCount ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.30.30706.0	    02/28/22 13:32:01
-0Lab 7: Calculate time difference with procedure	     Symbols 2 - 1
+Microsoft (R) Macro Assembler Version 14.30.30706.0	    03/14/22 19:08:41
+*Lab 8: Find letters in 2D array of string		     Symbols 2 - 1
 
 
 
@@ -320,6 +286,7 @@ Macros:
 
                 N a m e                 Type
 
+multiplyNum  . . . . . . . . . .	Proc
 printStr . . . . . . . . . . . .	Proc
 
 
@@ -411,8 +378,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000007E Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000147 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000046 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000110 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -519,22 +486,20 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-findDiff . . . . . . . . . . . .	P Near	 0000010A _TEXT	Length= 0000003D Public STDCALL
-  MismatchError  . . . . . . . .	L Near	 00000130 _TEXT	
-  Success  . . . . . . . . . . .	L Near	 00000139 _TEXT	
-  Restore  . . . . . . . . . . .	L Near	 00000140 _TEXT	
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000007B Public STDCALL
-  top  . . . . . . . . . . . . .	L Near	 00000000 _TEXT	
-  invalidDiff  . . . . . . . . .	L Near	 00000066 _TEXT	
-  theEnd . . . . . . . . . . . .	L Near	 00000072 _TEXT	
+fillArr  . . . . . . . . . . . .	P Near	 00000040 _TEXT	Length= 0000004A Public STDCALL
+  fillArrLoop  . . . . . . . . .	L Near	 0000004D _TEXT	
+  userEndFillArr . . . . . . . .	L Near	 0000007B _TEXT	
+  exitFillArr  . . . . . . . . .	L Near	 0000007D _TEXT	
+findCount  . . . . . . . . . . .	P Near	 000000C4 _TEXT	Length= 0000004C Public STDCALL
+  findCountLoop  . . . . . . . .	L Near	 000000FC _TEXT	
+  findCountLoopJmp . . . . . . .	L Near	 00000102 _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000040 Public STDCALL
+  letter . . . . . . . . . . . .	L Near	 0000001B _TEXT	
+  endOfMain  . . . . . . . . . .	L Near	 00000039 _TEXT	
+printArr . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 0000003A Public STDCALL
+  printArrLoop . . . . . . . . .	L Near	 0000009E _TEXT	
+  endOfPrintArr  . . . . . . . .	L Near	 000000C0 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
-readTime . . . . . . . . . . . .	P Near	 0000007B _TEXT	Length= 0000008F Public STDCALL
-  Start  . . . . . . . . . . . .	L Near	 00000083 _TEXT	
-  HourInput  . . . . . . . . . .	L Near	 00000087 _TEXT	
-  MinuteInput  . . . . . . . . .	L Near	 000000A4 _TEXT	
-  InvalidInputReset  . . . . . .	L Near	 000000D1 _TEXT	
-  InvalidInput . . . . . . . . .	L Near	 000000D6 _TEXT	
-  Store  . . . . . . . . . . . .	L Near	 000000E4 _TEXT	
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 
@@ -554,6 +519,7 @@ Symbols:
 @stack . . . . . . . . . . . . .	Text   	 FLAT
 ALT_MASK . . . . . . . . . . . .	Number	 00000003h   
 CAPSLOCK_ON  . . . . . . . . . .	Number	 00000080h   
+COLS . . . . . . . . . . . . . .	Number	 0000000Bh   
 CREATE_ALWAYS  . . . . . . . . .	Number	 00000002h   
 CREATE_NEW . . . . . . . . . . .	Number	 00000001h   
 CTRL_MASK  . . . . . . . . . . .	Number	 0000000Ch   
@@ -659,6 +625,7 @@ OPEN_EXISTING  . . . . . . . . .	Number	 00000003h
 PeekConsoleInput . . . . . . . .	Text   	 PeekConsoleInputA
 RIGHT_ALT_PRESSED  . . . . . . .	Number	 00000001h   
 RIGHT_CTRL_PRESSED . . . . . . .	Number	 00000004h   
+ROWS . . . . . . . . . . . . . .	Number	 00000003h   
 ReadConsoleInput . . . . . . . .	Text   	 ReadConsoleInputA
 ReadConsole  . . . . . . . . . .	Text   	 ReadConsoleA
 SCROLLLOCK_ON  . . . . . . . . .	Number	 00000040h   
@@ -756,14 +723,9 @@ black  . . . . . . . . . . . . .	Number	 00000000h
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
-diffErrStr . . . . . . . . . . .	Byte	 0000003A _DATA	
-diffHr . . . . . . . . . . . . .	Byte	 0000007C _DATA	
-diffMin  . . . . . . . . . . . .	Byte	 0000007D _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
-hrOutStr . . . . . . . . . . . .	Byte	 00000066 _DATA	
-hrStr  . . . . . . . . . . . . .	Byte	 00000000 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -771,11 +733,10 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-mnOutStr . . . . . . . . . . . .	Byte	 0000006F _DATA	
-mnStr  . . . . . . . . . . . . .	Byte	 00000014 _DATA	
+myArr  . . . . . . . . . . . . .	Byte	 00000000 _DATA	
+promptEnterChar  . . . . . . . .	Byte	 00000032 _DATA	
+promptEnterStr . . . . . . . . .	Byte	 00000021 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-timeArr  . . . . . . . . . . . .	Byte	 0000007A _DATA	
-timeErrStr . . . . . . . . . . .	Byte	 0000002A _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   

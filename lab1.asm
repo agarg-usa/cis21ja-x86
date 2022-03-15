@@ -1,5 +1,5 @@
 ; Lab 1
-; Name:  Aryan Garg          
+; Name:  Aryan Garg
 
 ; 1. Put your name above. For the rest of the quarter, you should
 ;   always have your name at the top of your source file
@@ -16,7 +16,7 @@ first_text  BYTE  "This is Aryan's first CIS 21JA assignment", 0ah, 0dh, 0
 .code
 main PROC
 	mov edx, OFFSET first_text
-	call writeString	
+	call writeString
 	call crlf
 	exit
 main ENDP
